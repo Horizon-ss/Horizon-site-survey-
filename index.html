@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Site Survey</title>
+
+<!-- PWA essentials -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#12A44A">
+<link rel="icon" href="assets/icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<style>
+  :root{--bg:#f6f8fb;--card:#fff;--line:#ddd;--muted:#666;--brand:#12a44a}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0;padding:10px;color:#111}
+  h1{margin:4px 0 2px;text-align:center;font-size:22px}
+  .brand{margin:0 0 8px;text-align:center;color:var(--brand);font-weight:800;font-size:38px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  label{font-size:.92rem;margin:2px 4px}
+  input[type=text],input[type=tel],input[type=number],textarea{
+    width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:.95rem
+  }
+  textarea{min-height:90px}
+  .small{max-width:240px}
+  .small-wide{max-width:320px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+  .section-title{font-weight:700;margin:6px 0 8px}
+  .btn{padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer}
+  .btn.primary{background:#0b69ff;color:#fff;border-color:#0b69ff}
+  .btn.install{background:#12a44a;color:#fff;border-color:#12a44a}
+  .btn.warn{background:#ffe5e5;border-color:#f5b5b5;color:#a10000}
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden}
+  th,td{border:1px solid var(--line);padding:8px;text-align:center;font-size:.95rem}
+  th{background:#eef0f4}
+  .hidden{display:none !important}
+  .muted{color:var(--muted);font-size:.9rem}
+  .status{margin-top:4px;text-align:center;color:#666;font-size:.9rem;min-height:1.2em}
+
+  /* Photos preview (printed) */
+  .photo-report{margin-top:8px}
+  .photo-grid{display:flex;flex-wrap:wrap;gap:8px}
+  .photo-item{width:calc(50% - 8px);border:1px solid var(--line);padding:6px;border-radius:10px;background:#fff}
+  .caption{font-size:0.92rem;margin-bottom:4px;font-weight:700}
+  .photo-img{width:100%;height:auto;display:block;border-radius:6px}
+
+  /* Print */
+  @media print{
+    body{background:#fff}
+    .no-print{display:none !important}
+    input,button{border:0}
+    th,td{border:1px solid #999;padding:6px}
+    .photo-item{break-inside:avoid;page-break-inside:avoid}
+    @page{size:A4;margin:10mm}
+  }
+</style>
+</head>
+<body>
+
+<h1>Site Survey</h1>
+<div class="brand"><img src="assets/icons/brand.png" alt="Horizon" style="height:64px;vertical-align:middle"></div>
+<div class="controls no-print" style="justify-content:center;margin-bottom:6px">
+  <button id="installBtn" class="btn install hidden">تثبيت التطبيق</button>
+</div>
+<div id="statusBar" class="status"></div>
+
+<!-- Header -->
+<div class="card">
+  <div class="row">
+    <label>اسم الكوستمر</label><input id="customerName" class="small" type="text" placeholder="مثال: شركة س"/>
+    <label>رقم التلفون</label><input id="phone" class="small" type="tel" placeholder="07xx xxx xxxx"/>
+  </div>
+  <div class="row">
+    <label>الموقع</label><input id="location" class="small-wide" type="text" placeholder="Latitude, Longitude" />
+    <button id="getLocation" class="btn primary no-print">التقط الموقع الحالي</button>
+    <span id="locStatus" class="muted"></span>
+  </div>
+  <div class="row">
+    <label>العبّار</label><input id="abarField" class="small" type="text"/>
+    <label>البوب</label><input id="popField" class="small" type="text"/>
+  </div>
+</div>
+
+<!-- Materials -->
+<div class="section-title">المواد المطلوبة</div>
+<table>
+  <thead>
+    <tr><th>المادة</th><th>نوع المادة / تفعيل</th><th>العدد</th><th>خيارات خاصة</th></tr>
+  </thead>
+  <tbody id="materialsBody">
+    <tr data-key="dish">
+      <td>الدش</td>
+      <td><input type="text" id="type_dish" placeholder="نوع المادة (اختياري)"></td>
+      <td><input type="number" id="qty_dish" min="0" placeholder="العدد"></td>
+      <td><input type="text" id="notes_dish" placeholder="ملاحظات (اختياري)"></td>
+    </tr>
+    <tr data-key="linkRouter">
+      <td>راوتر اللنك</td>
+      <td><input type="text" id="type_linkRouter" placeholder="نوع المادة (اختياري)"></td>
+      <td><input type="number" id="qty_linkRouter" min="0" placeholder="العدد"></td>
+      <td><input type="text" id="notes_linkRouter" placeholder="ملاحظات (اختياري)"></td>
+    </tr>
+    <tr data-key="router">
+      <td>الراوتر</td>
+      <td><input type="text" id="type_router" placeholder="نوع المادة (اختياري)"></td>
+      <td><input type="number" id="qty_router" min="0" placeholder="العدد"></td>
+      <td><input type="text" id="notes_router" placeholder="ملاحظات (اختياري)"></td>
+    </tr>
+    <tr data-key="cable">
+      <td>الكيبل</td>
+      <td><input type="checkbox" id="chk_cable"></td>
+      <td><input type="number" id="qty_cable" min="0" placeholder="العدد" class="hidden"></td>
+      <td><input type="text" id="notes_cable" placeholder="ملاحظات أخرى (اختياري)" class="hidden"></td>
+    </tr>
+    <tr data-key="pole">
+      <td>البول</td>
+      <td><input type="checkbox" id="chk_pole"></td>
+      <td><input type="number" id="qty_pole" min="0" placeholder="العدد" class="hidden"></td>
+      <td>
+        <input type="checkbox" id="pole_weld" class="hidden"><label for="pole_weld" class="hidden">لحيم</label>
+        <input type="checkbox" id="pole_fix" class="hidden"><label for="pole_fix" class="hidden">تثبيت</label>
+      </td>
+    </tr>
+    <tr data-key="tower">
+      <td>التور</td>
+      <td><input type="checkbox" id="chk_tower"></td>
+      <td><input type="number" id="qty_tower" min="0" placeholder="العدد" class="hidden"></td>
+      <td>
+        <input type="checkbox" id="tower_ground" class="hidden"><label for="tower_ground" class="hidden">من الأرض</label>
+        <input type="checkbox" id="tower_roof" class="hidden"><label for="tower_roof" class="hidden">من السطح</label>
+      </td>
+    </tr>
+    <tr data-key="sidearm">
+      <td>السايدارم</td>
+      <td><input type="checkbox" id="chk_sidearm"></td>
+      <td><input type="number" id="qty_sidearm" min="0" placeholder="العدد" class="hidden"></td>
+      <td><input type="text" id="notes_sidearm" placeholder="ملاحظات أخرى (اختياري)" class="hidden"></td>
+    </tr>
+    <tr data-key="unify">
+      <td>اليونيفاي</td>
+      <td><input type="checkbox" id="chk_unify"></td>
+      <td><input type="number" id="qty_unify" min="0" placeholder="العدد" class="hidden"></td>
+      <td><input type="text" id="notes_unify" placeholder="ملاحظات أخرى (اختياري)" class="hidden"></td>
+    </tr>
+    <tr data-key="rack">
+      <td>الراك</td>
+      <td><input type="checkbox" id="chk_rack"></td>
+      <td><input type="number" id="qty_rack" min="0" placeholder="العدد" class="hidden"></td>
+      <td><input type="text" id="size_rack" placeholder="حجم الراك" class="hidden"></td>
+    </tr>
+    <tr data-key="treeCable">
+      <td>تري كيبل</td>
+      <td><input type="checkbox" id="chk_treeCable"></td>
+      <td><input type="number" id="qty_treeCable" min="0" placeholder="العدد" class="hidden"></td>
+      <td><input type="text" id="notes_treeCable" placeholder="ملاحظات أخرى (اختياري)" class="hidden"></td>
+    </tr>
+    <tr data-key="sfp">
+      <td>SFP</td>
+      <td><input type="checkbox" id="chk_sfp"></td>
+      <td><input type="number" id="qty_sfp" min="0" placeholder="العدد" class="hidden"></td>
+      <td><input type="text" id="notes_sfp" placeholder="ملاحظات أخرى (اختياري)" class="hidden"></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="controls no-print" style="margin-top:8px">
+  <button id="addCustomRow" class="btn">+ إضافة مادة أخرى</button>
+  <button id="printBtn" class="btn primary">تصدير إلى PDF</button>
+</div>
+
+<div class="card">
+  <div class="section-title">ملاحظات أخرى</div>
+  <textarea id="finalNotes" placeholder="اكتب أي ملاحظات إضافية (اختياري)"></textarea>
+</div>
+
+<!-- Photos upload -->
+<div class="section-title">الصور</div>
+<div class="card no-print" id="photoFormSection">
+  <div class="row"><label>صورة باتجاه البوب</label><input id="img_pop" type="file" accept="image/*" capture="environment" multiple></div>
+  <div class="row"><label>صورة مكان التور/البول</label><input id="img_tower" type="file" accept="image/*" capture="environment" multiple></div>
+  <div class="row"><label>صورة مكان نصب الراك/الراوتر</label><input id="img_rack" type="file" accept="image/*" capture="environment" multiple></div>
+  <div class="row"><label>صور أماكن تسليك الكيبلات</label><input id="img_cables" type="file" accept="image/*" capture="environment" multiple></div>
+  <div class="row"><label>صور أخرى</label><input id="img_other" type="file" accept="image/*" capture="environment" multiple></div>
+</div>
+
+<div id="photoReport" class="photo-report"></div>
+
+<!-- Footer fields -->
+<div class="card">
+  <div class="row">
+    <label>اسم الفني</label><input id="techName" class="small" type="text"/>
+    <label>اسم المهندس</label><input id="engName" class="small" type="text"/>
+    <label>تاريخ التقرير</label><input id="reportDate" class="small" type="text" readonly/>
+  </div>
+</div>
+
+<script>
+  // Service worker register + install prompt
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('./sw.js');
+    });
+  }
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.classList.remove('hidden');
+  });
+  installBtn && installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.classList.add('hidden');
+  });
+
+  const statusBar = document.getElementById('statusBar');
+  const setStatus = (m)=>{ if(statusBar) statusBar.textContent=m }
+
+  function e(id){return document.getElementById(id)}
+  function fmtDate(d){return new Intl.DateTimeFormat('ar-EG').format(d)}
+  e('reportDate').value = fmtDate(new Date())
+
+  // Capture location
+  if(e('getLocation')) e('getLocation').addEventListener('click', ()=>{
+    const status=e('locStatus'); const locInput=e('location');
+    const isSecure = location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1';
+    if(!isSecure){
+      status.textContent='⚠️ افتح عبر HTTPS/localhost. أو اكتب الإحداثيات يدويًا.';
+      locInput.readOnly=false; locInput.placeholder='Lat, Lon';
+      return;
+    }
+    if(!navigator.geolocation){ status.textContent='المتصفح لا يدعم الموقع'; return }
+    status.textContent='جارٍ تحديد الموقع...';
+    navigator.geolocation.getCurrentPosition(pos=>{
+      locInput.value = pos.coords.latitude.toFixed(6)+', '+pos.coords.longitude.toFixed(6);
+      status.textContent='تم ✓';
+    }, err=>{ status.textContent='فشل: '+err.message }, {enableHighAccuracy:true, timeout:10000, maximumAge:0});
+  });
+
+  // Toggle behavior for check rows
+  (function initRowToggles(){
+    const body = document.querySelector('#materialsBody');
+    body.querySelectorAll('tr[data-key]').forEach(tr=>{
+      const key = tr.getAttribute('data-key');
+      const chk = tr.querySelector('td:nth-child(2) input[type="checkbox"]');
+      const qty = tr.querySelector('td:nth-child(3) input[type="number"]');
+      const show = (el,on)=>{ if(!el) return; el.classList.toggle('hidden', !on) };
+      function update(){
+        const on = chk ? chk.checked : false;
+        if(chk){ show(qty, on); }
+        if(key==='rack'){ show(tr.querySelector('#size_rack'), on); }
+        if(key==='tower'){
+          const g=tr.querySelector('#tower_ground'), gl=tr.querySelector('label[for="tower_ground"]');
+          const r=tr.querySelector('#tower_roof'), rl=tr.querySelector('label[for="tower_roof"]');
+          [g,gl,r,rl].forEach(el=>show(el,on));
+        }
+        if(key==='pole'){
+          const w=tr.querySelector('#pole_weld'), wl=tr.querySelector('label[for="pole_weld"]');
+          const f=tr.querySelector('#pole_fix'), fl=tr.querySelector('label[for="pole_fix"]');
+          [w,wl,f,fl].forEach(el=>show(el,on));
+        }
+        if(['sfp','treeCable','unify','sidearm','cable'].includes(key)){
+          const notes = tr.querySelector('td:nth-child(4) input[type="text"]');
+          show(notes, on);
+        }
+      }
+      update();
+      if(chk) chk.addEventListener('change', update);
+    });
+  })();
+
+  // Add custom row
+  if(e('addCustomRow')){
+    e('addCustomRow').addEventListener('click', ()=>{
+      const body=document.getElementById('materialsBody');
+      const tr=document.createElement('tr');
+      const td1=document.createElement('td'); const nameInp=document.createElement('input'); nameInp.type='text'; nameInp.placeholder='اسم المادة'; td1.appendChild(nameInp);
+      const td2=document.createElement('td'); const details=document.createElement('input'); details.type='text'; details.placeholder='تفاصيل (اختياري)'; td2.appendChild(details);
+      const td3=document.createElement('td'); const qty=document.createElement('input'); qty.type='number'; qty.min='0'; qty.placeholder='العدد'; td3.appendChild(qty);
+      const td4=document.createElement('td'); const del=document.createElement('button'); del.textContent='حذف مادة'; del.className='btn warn no-print'; del.addEventListener('click',()=>tr.remove()); td4.appendChild(del);
+      tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tr.appendChild(td4);
+      body.appendChild(tr);
+    });
+  }
+
+  // Photos preview printed with captions
+  const photoReport = e('photoReport');
+  function renderImageGroup(id, title, fileList){
+    if(!photoReport) return;
+    let block = photoReport.querySelector('[data-group="'+id+'"]');
+    if(!block){ block = document.createElement('div'); block.setAttribute('data-group', id); photoReport.appendChild(block); }
+    block.innerHTML='';
+    const grid = document.createElement('div'); grid.className='photo-grid'; block.appendChild(grid);
+    Array.from(fileList||[]).forEach((file, idx)=>{
+      const item = document.createElement('div'); item.className='photo-item';
+      const cap = document.createElement('div'); cap.className='caption'; cap.textContent = title + (fileList.length>1? (' - '+(idx+1)) : '');
+      const img = document.createElement('img'); img.className='photo-img';
+      const fr = new FileReader(); fr.onload = ()=>{ img.src = fr.result };
+      fr.readAsDataURL(file);
+      item.appendChild(cap); item.appendChild(img); grid.appendChild(item);
+    });
+  }
+  function setupPreview(inputId, title){ const inp=e(inputId); if(!inp) return; inp.addEventListener('change', ()=> renderImageGroup(inputId, title, inp.files)); }
+  setupPreview('img_pop','صورة باتجاه البوب');
+  setupPreview('img_tower','صورة مكان التور/البول');
+  setupPreview('img_rack','صورة مكان نصب الراك/الراوتر');
+  setupPreview('img_cables','صور أماكن تسليك الكيبلات');
+  setupPreview('img_other','صور أخرى');
+
+  // Validation (notes/details optional & "صور أخرى" اختيارية)
+  function validateForm(){
+    const missing=[];
+    const req=(id,label)=>{const el=e(id); if(el && (!el.value || el.value.trim()==='')) missing.push(label)};
+    req('customerName','اسم الكوستمر');
+    req('phone','رقم التلفون');
+    req('location','الموقع');
+    req('abarField','رقم العبار');
+    req('popField','البوب');
+    req('techName','اسم الفني');
+    req('engName','اسم المهندس');
+    req('reportDate','تاريخ التقرير');
+
+    const rows = document.querySelectorAll('#materialsBody tr[data-key]');
+    rows.forEach(tr=>{
+      const key = tr.getAttribute('data-key');
+      if(['dish','linkRouter','router'].includes(key)){
+        const qty = tr.querySelector('td:nth-child(3) input[type="number"]');
+        if(!qty || (qty.value==='' || Number(qty.value)<1)) missing.push('العدد لـ '+tr.cells[0].textContent);
+      } else {
+        const chk = tr.querySelector('td:nth-child(2) input[type="checkbox"]');
+        if(chk && chk.checked){
+          const qty = tr.querySelector('td:nth-child(3) input[type="number"]');
+          if(!qty || (qty.value==='' || Number(qty.value)<1)) missing.push('العدد لـ '+tr.cells[0].textContent);
+          if(key==='tower'){
+            const g=tr.querySelector('#tower_ground'); const r=tr.querySelector('#tower_roof');
+            if(!(g && g.checked) && !(r && r.checked)) missing.push('اختيار طريقة نصب التور (أرض/سطح)');
+          }
+          if(key==='pole'){
+            const w=tr.querySelector('#pole_weld'); const f=tr.querySelector('#pole_fix');
+            if(!(w && w.checked) && !(f && f.checked)) missing.push('تحديد طريقة تثبيت البول (لحيم/تثبيت)');
+          }
+          if(key==='rack'){
+            const size=tr.querySelector('#size_rack');
+            if(!size || size.value.trim()==='') missing.push('حجم الراك');
+          }
+        }
+      }
+    });
+
+    const photoFields=[
+      ['img_pop','صورة باتجاه البوب'],
+      ['img_tower','صورة مكان التور/البول'],
+      ['img_rack','صورة مكان نصب الراك/الراوتر'],
+      ['img_cables','صور أماكن تسليك الكيبلات']
+    ];
+    photoFields.forEach(([id,label])=>{const inp=e(id); if(!inp || !inp.files || inp.files.length===0) missing.push(label)});
+    return missing;
+  }
+
+  function handlePrint(){
+    const errors=validateForm();
+    if(errors.length){ alert('يرجى إكمال الحقول قبل التصدير:\\n- '+errors.join('\\n- ')); return false; }
+    window.print(); return false;
+  }
+  e('printBtn').addEventListener('click', handlePrint);
+</script>
+
+</body>
+</html>
