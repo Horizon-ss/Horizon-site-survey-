@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Site Survey</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0b3d2e">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <style>
+    :root{
+      --page:#0b3d2e;        /* أخضر غامق */
+      --card:#eef2f6;        /* رصاصي فاتح للبطاقات والحقول */
+      --ink:#0f172a;
+      --muted:#64748b;
+      --line:#cbd5e1;
+    }
+    html,body{background:var(--page);color:var(--ink);font-family:Verdana,'Cairo',system-ui,-apple-system,'Segoe UI',Tahoma,sans-serif}
+    .card{border-radius:14px;background:var(--card);box-shadow:0 2px 10px rgba(0,0,0,.15);border:0}
+    .card-header{background:var(--card);font-weight:700;border-bottom:1px solid rgba(0,0,0,.04)}
+    .form-label{font-weight:600;font-size:.92rem}
+    .form-control{padding:.4rem .6rem;font-size:.92rem;background:#fff;border-color:#dfe6ee}
+    .form-control:focus{box-shadow:0 0 0 .15rem rgba(16,185,129,.25)}
+    .table> :not(caption)>*>*{padding:.5rem .6rem}
+    .table.table-sm> :not(caption)>*>*{padding:.35rem .5rem}
+    .hint{color:var(--muted)}
+    .hidden{display:none!important}
+    .required:after{content:" *";color:#d72d2d;margin-right:4px}
+    #statusBar,#statusBar2{font-size:.95rem;color:#e2e8f0}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .btn-primary{background:#0ea5a5;border-color:#0ea5a5}
+    .btn-outline-primary{color:#0ea5a5;border-color:#0ea5a5}
+    .btn-outline-primary:hover{background:#0ea5a5;color:#fff}
+  </style>
+</head>
+<body>
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 text-white">
+    <h1 class="h5 m-0" style="font-family:Verdana,'Cairo',sans-serif">تقرير رفع موقع</h1>
+    <span class="badge bg-light text-dark border">PWA</span>
+  </div>
+
+  <!-- معلومات عامة -->
+  <div class="card mb-3">
+    <div class="card-header">معلومات الزبون والموقع</div>
+    <div class="card-body row g-3">
+      <div class="col-md-4">
+        <label class="form-label required">اسم الكوستمر</label>
+        <input id="customerName" type="text" class="form-control" placeholder="مثال: شركة س">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">رقم الهاتف</label>
+        <input id="phone" type="tel" class="form-control" placeholder="07xx xxx xxxx">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label required">الباند</label>
+        <input id="bandField" type="text" class="form-control" placeholder="5GHz / 60GHz / Fiber">
+      </div>
+
+      <div class="col-md-9">
+        <label class="form-label required">الموقع</label>
+        <div class="d-flex gap-2">
+          <input id="location" type="text" class="form-control" placeholder="العنوان أو الإحداثيات">
+          <button id="pickLoc" type="button" class="btn btn-outline-primary btn-sm">📍 التقاط تلقائي</button>
+        </div>
+        <div class="hint mt-1">زر “التقاط تلقائي” يملأ الإحداثيات فورًا (يحتاج سماح المتصفح).</div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">التاريخ</label>
+        <input id="reportDate" type="date" class="form-control">
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label required">اسم الفني</label>
+        <input id="techName" type="text" class="form-control" placeholder="اسم الفني">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label required">المتابعة مع</label>
+        <input id="engName" type="text" class="form-control" placeholder="اسم المسؤول">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">POP/بوب</label>
+        <input id="popField" type="text" class="form-control" placeholder="مثال: POP-123">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">العبّار</label>
+        <input id="abarField" type="text" class="form-control" placeholder="A/B/C">
+      </div>
+      <div class="col-12">
+        <div id="statusBar" class="small"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- الصور -->
+  <div class="card mb-3">
+    <div class="card-header">الصور المطلوبة</div>
+    <div class="card-body row g-3">
+      <div class="col-md-6">
+        <label class="form-label required">صورة باتجاه البوب</label>
+        <input id="img_pop" type="file" accept="image/*" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">صورة مكان التور/البول</label>
+        <input id="img_tower" type="file" accept="image/*" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">صورة مكان نصب الراك/الراوتر</label>
+        <input id="img_rack" type="file" accept="image/*" class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label required">صور أماكن تسليك الكيبلات</label>
+        <input id="img_cables" type="file" accept="image/*" multiple class="form-control">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">صور أخرى (اختياري)</label>
+        <input id="img_other" type="file" accept="image/*" multiple class="form-control">
+      </div>
+    </div>
+  </div>
+
+  <!-- المواد المطلوبة -->
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>المواد المطلوبة</span>
+      <button id="addCustomRow" class="btn btn-success btn-sm">➕ إضافة مادة</button>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>الجهاز</th>
+              <th>التفاصيل</th>
+              <th style="width:12%">العدد</th>
+              <th>ملاحظات</th>
+              <th style="width:8%"></th>
+            </tr>
+          </thead>
+          <tbody id="extrasBody">
+            <tr data-extra="dish">
+              <td>الدش (Dish)</td>
+              <td><input type="text" class="form-control extra-det" placeholder="مواصفات/حجم الدش"></td>
+              <td><input type="number" min="0" class="form-control extra-qty" placeholder="0"></td>
+              <td><input type="text" class="form-control extra-note" placeholder="ملاحظات"></td>
+              <td></td>
+            </tr>
+            <tr data-extra="linkRouter">
+              <td>راوتر اللنك</td>
+              <td><input type="text" class="form-control extra-det" placeholder="اسم/موديل راوتر اللنك"></td>
+              <td><input type="number" min="0" class="form-control extra-qty" placeholder="0"></td>
+              <td><input type="text" class="form-control extra-note" placeholder="ملاحظات"></td>
+              <td></td>
+            </tr>
+            <tr data-extra="routerType">
+              <td>نوع الراوتر</td>
+              <td><input type="text" class="form-control extra-det" placeholder="اسم/موديل الراوتر"></td>
+              <td><input type="number" min="0" class="form-control extra-qty" placeholder="0"></td>
+              <td><input type="text" class="form-control extra-note" placeholder="ملاحظات"></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- المواد (مدمجة) -->
+  <div class="card mb-3">
+    <div class="card-header sr-only">المواد</div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width:28%">المادة</th>
+              <th style="width:14%">تفعيل</th>
+              <th style="width:12%">العدد</th>
+              <th>خيارات خاصة</th>
+              <th style="width:10%">حذف</th>
+            </tr>
+          </thead>
+          <tbody id="materialsBody">
+            <tr data-key="tower">
+              <td>تور</td>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><input type="number" min="0" class="form-control hidden" placeholder="0"></td>
+              <td>
+                <div class="form-check form-check-inline hidden">
+                  <input class="form-check-input" type="radio" name="tower_pos" id="tower_ground">
+                  <label class="form-check-label" for="tower_ground">من الأرض</label>
+                </div>
+                <div class="form-check form-check-inline hidden">
+                  <input class="form-check-input" type="radio" name="tower_pos" id="tower_roof">
+                  <label class="form-check-label" for="tower_roof">من السطح</label>
+                </div>
+              </td>
+              <td></td>
+            </tr>
+            <tr data-key="pole">
+              <td>بول</td>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><input type="number" min="0" class="form-control hidden" placeholder="0"></td>
+              <td>
+                <div class="form-check form-check-inline hidden">
+                  <input class="form-check-input" type="radio" name="pole_fix_type" id="pole_weld">
+                  <label class="form-check-label" for="pole_weld">لحيم</label>
+                </div>
+                <div class="form-check form-check-inline hidden">
+                  <input class="form-check-input" type="radio" name="pole_fix_type" id="pole_fix">
+                  <label class="form-check-label" for="pole_fix">تثبيت</label>
+                </div>
+              </td>
+              <td></td>
+            </tr>
+            <tr data-key="rack">
+              <td>راك</td>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><input type="number" min="0" class="form-control hidden" placeholder="0"></td>
+              <td>
+                <input id="size_rack" type="text" class="form-control hidden" placeholder="حجم الراك (U)">
+              </td>
+              <td></td>
+            </tr>
+            <tr data-key="cable">
+              <td>كيبل</td>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><input type="number" min="0" class="form-control hidden" placeholder="0"></td>
+              <td><input type="text" class="form-control hidden" placeholder="ملاحظات/طول/نوع"></td>
+              <td></td>
+            </tr>
+            <tr data-key="sfp">
+              <td>SFP</td>
+              <td><input type="checkbox" class="form-check-input"></td>
+              <td><input type="number" min="0" class="form-control hidden" placeholder="0"></td>
+              <td><input type="text" class="form-control hidden" placeholder="موديل/ملاحظات"></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-5">
+    <div class="card-header">ملاحظات</div>
+    <div class="card-body">
+      <textarea id="finalNotes" class="form-control" rows="3" placeholder="ملاحظات عامة..."></textarea>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-2">
+    <button id="exportBtn" class="btn btn-primary btn-sm">💾 تصدير PDF</button>
+    <button id="shareBtn" class="btn btn-outline-primary btn-sm">🔗 مشاركة</button>
+    <button id="installBtn" class="btn btn-outline-primary btn-sm hidden">⬇️ تثبيت التطبيق</button>
+    <div id="statusBar2" class="align-self-center ms-2 text-white"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $=(s,c=document)=>c.querySelector(s);
+  const $$=(s,c=document)=>Array.from(c.querySelectorAll(s));
+
+  // Auto date
+  const d = $('#reportDate');
+  if(d && !d.value){ const now=new Date(); d.value=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
+
+  // GPS button
+  $('#pickLoc')?.addEventListener('click', async()=>{
+    const loc=$('#location'); const btn=$('#pickLoc');
+    if(!('geolocation' in navigator)) return alert('المتصفح لا يدعم تحديد الموقع');
+    btn.disabled=true; const prev=btn.textContent; btn.textContent='جاري الالتقاط...';
+    try{
+      await new Promise((resolve,reject)=>{
+        navigator.geolocation.getCurrentPosition((pos)=>{
+          const lat=pos.coords.latitude.toFixed(6), lon=pos.coords.longitude.toFixed(6);
+          loc.value = `${lat}, ${lon}`; resolve();
+        }, reject, {enableHighAccuracy:true, timeout:15000, maximumAge:0});
+      });
+      btn.textContent='تم ✓';
+    }catch(e){ alert('تعذر تحديد الموقع: '+e.message); btn.textContent=prev; }
+    finally{ btn.disabled=false; }
+  });
+
+  // Materials toggles
+  function bindToggleRow(tr){
+    const key=tr.getAttribute('data-key');
+    const chk=tr.querySelector('td:nth-child(2) input[type="checkbox"]');
+    const qty=tr.querySelector('td:nth-child(3) input[type="number"]');
+    const optsCell=tr.querySelector('td:nth-child(4)');
+    function show(el,on){ if(!el) return; el.classList.toggle('hidden', !on); }
+    function update(){
+      const on=!!(chk&&chk.checked);
+      show(qty,on);
+      if(optsCell) optsCell.querySelectorAll('input, label, select, .form-check').forEach(el=>show(el,on));
+      if(key==='rack') show(tr.querySelector('#size_rack'), on);
+    }
+    if(chk) chk.addEventListener('change', update);
+    update();
+  }
+  $$('#materialsBody tr[data-key]').forEach(bindToggleRow);
+
+  // Add/Delete custom material rows (in extras table)
+  $('#addCustomRow')?.addEventListener('click', ()=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td><input type="text" class="form-control" placeholder="اسم المادة/الجهاز"></td>
+      <td><input type="text" class="form-control extra-det" placeholder="التفاصيل"></td>
+      <td><input type="number" min="0" class="form-control extra-qty" placeholder="0"></td>
+      <td><input type="text" class="form-control extra-note" placeholder="ملاحظات"></td>
+      <td><button type="button" class="btn btn-sm btn-outline-danger del-row">حذف</button></td>`;
+    $('#extrasBody').appendChild(tr);
+  });
+  $('#extrasBody')?.addEventListener('click', (e)=>{
+    if(e.target.classList.contains('del-row')){
+      e.target.closest('tr')?.remove();
+    }
+  });
+
+  // Validation (required conditions before export)
+  function validate(){
+    const errors=[];
+    const need=(sel,label)=>{ const el=$(sel); const v=(el?.value||'').trim(); if(!v) errors.push('• '+label); };
+    need('#customerName','اسم الكوستمر');
+    need('#location','الموقع');
+    need('#bandField','الباند');
+    need('#techName','اسم الفني');
+    need('#engName','المتابعة مع');
+
+    const needF=(sel,label)=>{ const el=$(sel); if(!el || !el.files || el.files.length===0) errors.push('• '+label); };
+    needF('#img_pop','صورة باتجاه البوب');
+    needF('#img_tower','صورة مكان التور/البول');
+    needF('#img_rack','صورة مكان نصب الراك/الراوتر');
+    needF('#img_cables','صور أماكن تسليك الكيبلات');
+
+    const tower=$('#materialsBody tr[data-key="tower"] input[type="checkbox"]');
+    if(tower && tower.checked){
+      const g=$('#tower_ground')?.checked, r=$('#tower_roof')?.checked;
+      if(!g && !r) errors.push('• اختر طريقة نصب التور (من الأرض/من السطح)');
+    }
+    const pole=$('#materialsBody tr[data-key="pole"] input[type="checkbox"]');
+    if(pole && pole.checked){
+      const w=$('#pole_weld')?.checked, f=$('#pole_fix')?.checked;
+      if(!w && !f) errors.push('• اختر نوع تثبيت البول (لحيم/تثبيت)');
+    }
+
+    if(errors.length){
+      alert('يرجى إكمال الحقول قبل التصدير:\n' + errors.join('\n'));
+      return false;
+    }
+    return true;
+  }
+
+  function collectMaterials(){
+    const res=[];
+    $$('#materialsBody tr').forEach(tr=>{
+      const key=tr.getAttribute('data-key');
+      let name=tr.cells[0]?.innerText?.trim();
+      if(!name || name==='') name = tr.querySelector('td:first-child input')?.value?.trim();
+      if(!name) return;
+      const qtyVal = tr.querySelector('td:nth-child(3) input[type="number"]')?.value?.trim();
+      const chk = tr.querySelector('td:nth-child(2) input[type="checkbox"]');
+      const enabled = chk ? chk.checked : (!!qtyVal);
+      if(!(enabled || qtyVal)) return;
+      let details='';
+      if(qtyVal) details += `العدد: ${qtyVal}`;
+      if(key==='tower'){
+        const g=$('#tower_ground')?.checked, r=$('#tower_roof')?.checked;
+        if(g) details += (details?' | ':'')+'نصب من الأرض';
+        if(r) details += (details?' | ':'')+'نصب من السطح';
+      }
+      if(key==='pole'){
+        const w=$('#pole_weld')?.checked, f=$('#pole_fix')?.checked;
+        if(w) details += (details?' | ':'')+'لحيم';
+        if(f) details += (details?' | ':'')+'تثبيت';
+      }
+      if(key==='rack'){
+        const size=$('#size_rack')?.value?.trim();
+        if(size) details += (details?' | ':'')+`حجم الراك: ${size}`;
+      } else {
+        const noteVal= tr.querySelector('td:nth-child(4) input[type="text"]')?.value?.trim();
+        if(noteVal) details += (details?' | ':'')+`ملاحظات: ${noteVal}`;
+      }
+      if(!details) details='بدون تفاصيل';
+      res.push({name, details});
+    });
+    return res;
+  }
+
+  function collectExtrasLines(){
+    const lines=[];
+    $$('#extrasBody tr').forEach(tr=>{
+      const nameInput = tr.cells[0].querySelector('input');
+      const name = nameInput ? nameInput.value.trim() : tr.cells[0].innerText.trim();
+      const det =tr.querySelector('.extra-det')?.value?.trim();
+      const qty =tr.querySelector('.extra-qty')?.value?.trim();
+      const note=tr.querySelector('.extra-note')?.value?.trim();
+      if(!(qty||det||note||name)) return;
+      const parts=[];
+      if(det) parts.push(det);
+      if(qty) parts.push('العدد: '+qty);
+      if(note) parts.push('ملاحظات: '+note);
+      lines.push(`${name||'مادة'}: ${parts.join(' | ')}`);
+    });
+    return lines;
+  }
+
+  function drawParagraph(ctx, text, x, y, maxW, lh){
+    const words = text.split(/(\s+)/).filter(Boolean);
+    let line='';
+    for(const w of words){
+      const test = line + w;
+      const width = ctx.measureText(test).width;
+      if(width > maxW && line){
+        ctx.fillText(line, x, y);
+        y += lh;
+        line = w.trimStart();
+      }else{
+        line = test;
+      }
+    }
+    if(line){ ctx.fillText(line, x, y); y += lh; }
+    return y;
+  }
+
+  async function buildFirstPageCanvas(){
+    const c = document.createElement('canvas');
+    const W = 2480, H = 3508; // A4 300dpi
+    c.width=W; c.height=H;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+
+    await document.fonts.ready;
+    ctx.direction='rtl';
+    ctx.textAlign='right';
+    const pad=160;
+    let x=W-pad, y=pad;
+
+    ctx.fillStyle='#0f172a';
+    ctx.font='700 78px Verdana, Cairo';
+    ctx.fillText('Site Survey', x, y);
+    y += 84;
+
+    const kv=[];
+    const v=(sel)=> (document.querySelector(sel)?.value||'').trim();
+    const pop=v('#popField'), abar=v('#abarField');
+    kv.push(['الزبون', v('#customerName')]);
+    kv.push(['الباند', v('#bandField')]);
+    kv.push(['هاتف', v('#phone')]);
+    kv.push(['الموقع', v('#location')]);
+    if(pop || abar) kv.push(['البوب/العبّار', `${pop||''}${abar? ' | '+abar:''}`]);
+    kv.push(['الفني', v('#techName')]);
+    kv.push(['المتابعة مع', v('#engName')]);
+    kv.push(['التاريخ', v('#reportDate')]);
+
+    const maxW=W-pad*2;
+    const lineH=60;
+
+    for(const [label,val] of kv){
+      if(!val) continue;
+      ctx.font='600 44px Verdana, Cairo';
+      const lab=label+': ';
+      const labW=ctx.measureText(lab).width;
+      ctx.fillText(lab, x, y);
+      ctx.font='400 44px Verdana, Cairo';
+      y = drawParagraph(ctx, val, x - labW, y, maxW - labW, lineH);
+    }
+
+    y += 14;
+    ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+    y += 56;
+
+    ctx.font='700 50px Verdana, Cairo';
+    ctx.fillText('المواد المطلوبة', x, y);
+    y += 18;
+    ctx.strokeStyle='#cbd5e1'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+    y += 34;
+
+    const extraLines = collectExtrasLines();
+    ctx.font='400 44px Verdana, Cairo';
+    const mats = collectMaterials();
+    function pushLine(t){ y = drawParagraph(ctx, t, x, y, maxW, lineH); }
+    if(extraLines.length===0 && mats.length===0){
+      pushLine('لا توجد مواد.');
+    }else{
+      for(const line of extraLines){ pushLine(line); }
+      for(const it of mats){
+        pushLine('• '+it.name+(it.details? ' — '+it.details:''));
+      }
+    }
+
+    const notes=(document.querySelector('#finalNotes')?.value||'').trim();
+    if(notes){
+      y += 22;
+      pushLine('الملاحظات: ' + notes);
+    }
+
+    return c.toDataURL('image/jpeg', 0.98);
+  }
+
+  async function imageDataUrlsFromInputs(){
+    const list=[];
+    async function push(input,label){
+      const files=Array.from((input?.files)||[]);
+      for(const f of files){
+        const du = await new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(f); });
+        list.push({label, name:f.name, dataUrl:du});
+      }
+    }
+    await push($('#img_pop'),'صورة باتجاه البوب');
+    await push($('#img_tower'),'صورة مكان التور/البول');
+    await push($('#img_rack'),'صورة مكان نصب الراك/الراوتر');
+    await push($('#img_cables'),'صور أماكن تسليك الكيبلات');
+    await push($('#img_other'),'صور أخرى');
+    return list;
+  }
+
+  function captionAsImage(text, widthMM, heightMM){
+    const dpi = 300;
+    const mmToPx = mm => Math.round(mm * dpi / 25.4);
+    const W = mmToPx(widthMM), H = mmToPx(heightMM);
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,W,H);
+    ctx.direction = 'rtl'; ctx.textAlign='center';
+    ctx.fillStyle = '#111827';
+    ctx.font = '400 28px Verdana, Cairo';
+    ctx.fillText(text, W/2, Math.round(H*0.65));
+    return c.toDataURL('image/png');
+  }
+
+  function addImagePage(doc, dataUrl, caption){
+    return new Promise((resolve)=>{
+      const img=new Image();
+      img.onload=()=>{
+        const pageW=doc.internal.pageSize.getWidth();
+        const pageH=doc.internal.pageSize.getHeight();
+        const iw=img.naturalWidth, ih=img.naturalHeight;
+        const r=Math.min((pageW-20)/iw, (pageH-30-10)/ih);
+        const w=iw*r, h=ih*r;
+        doc.addPage();
+        doc.addImage(dataUrl,'JPEG',(pageW-w)/2,10,w,h,undefined,'FAST');
+        if(caption){
+          const capDU = captionAsImage(caption, pageW-20, 12);
+          doc.addImage(capDU,'PNG',10,pageH-16,pageW-20,12,undefined,'FAST');
+        }
+        resolve();
+      };
+      img.onerror=()=>{ doc.addPage(); resolve(); };
+      img.src=dataUrl;
+    });
+  }
+
+  async function buildPdfBlob(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4', compress:true});
+
+    $('#statusBar').textContent='جارٍ تجهيز الصفحة 1 ...';
+    const page1 = await buildFirstPageCanvas();
+
+    const pimg = new Image();
+    await new Promise(res=>{ pimg.onload=res; pimg.src=page1; });
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const r = Math.min((pageW-20)/pimg.naturalWidth, (pageH-20)/pimg.naturalHeight);
+    const w = pimg.naturalWidth*r, h = pimg.naturalHeight*r;
+    doc.addImage(page1, 'JPEG', (pageW-w)/2, (pageH-h)/2, w, h, undefined, 'FAST');
+
+    $('#statusBar2').textContent='جارٍ إضافة الصور ...';
+    const photos = await imageDataUrlsFromInputs();
+    for(let i=0;i<photos.length;i++){
+      const cap = `${photos[i].label}${photos.length>1? ' - '+(i+1):''}`;
+      await addImagePage(doc, photos[i].dataUrl, cap);
+      $('#statusBar2').textContent = `إضافة الصور (${i+1}/${photos.length}) ...`;
+    }
+
+    const blob = doc.output('blob');
+    const name = ($('#customerName')?.value || 'Site_Survey').replace(/[\\/:*?"<>|]/g,'_') + '.pdf';
+    return {blob, name};
+  }
+
+  async function exportPDF(){
+    if(!validate()) return;
+    const {blob, name} = await buildPdfBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    $('#statusBar2').textContent='تم الحفظ ✓';
+  }
+
+  async function sharePDF(){
+    if(!validate()) return;
+    try{
+      const {blob, name} = await buildPdfBlob();
+      if(navigator.canShare && navigator.canShare({ files: [new File([blob], name, {type:'application/pdf'})] })){
+        await navigator.share({ files: [ new File([blob], name, {type:'application/pdf'}) ], title: name, text: 'تقرير موقع' });
+      }else{
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      }
+    }catch(e){
+      alert('تعذر المشاركة: ' + e.message);
+    }
+  }
+
+  // PWA: register SW + install flow
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    });
+  }
+  let deferredPrompt;
+  const installBtn = document.getElementById('installBtn');
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installBtn) installBtn.classList.remove('hidden');
+  });
+  installBtn?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    installBtn.disabled = true;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.classList.add('hidden');
+    installBtn.disabled = false;
+  });
+
+  document.getElementById('exportBtn')?.addEventListener('click', exportPDF);
+  document.getElementById('shareBtn')?.addEventListener('click', sharePDF);
+})();</script>
+
+</body>
+</html>
